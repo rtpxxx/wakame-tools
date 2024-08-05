@@ -34,7 +34,7 @@ tasks:
         task: init-rndc-user
         vars:
           USERNAME: '{{.ITEM}}'
-      - mount -a
+      - sudo mount -a
 
   init-rndc-user:
     desc: Task that initializes the resources for a single user.
@@ -88,13 +88,13 @@ tasks:
       TARGET_DIR:       '{{.USER_HOME_DIR}}/internal'
       TARGET_MASK:      '770'
       FSTAB_USER_STR:   '# ### [rndc] Shared internal folder mount for user <{{.USERNAME}}>'
-      FSTAB_MOUNT_STR:  '{{.RNDC_INTERNAL_DIR}} {{.USER_HOME_DIR}} none bind 0 0'
+      FSTAB_MOUNT_STR:  '{{.RNDC_INTERNAL_DIR}} {{.TARGET_DIR}} none bind 0 0'
     status:
       - test -d '{{.TARGET_DIR}}'
     cmds:
       - | 
         echo '{{.FSTAB_USER_STR}}'    | sudo tee -a '{{.FSTAB}}'
-        echo '{{.FSTAB_USER_MOUNT}}'  | sudo tee -a '{{.FSTAB}}'
+        echo '{{.FSTAB_MOUNT_STR}}'   | sudo tee -a '{{.FSTAB}}'
         sudo mkdir -p '{{.TARGET_DIR}}'
         sudo chown -R '{{.USERNAME}}:{{.RNDC_MAIN_GROUP}}' '{{.TARGET_DIR}}'
         sudo chmod -R '{{.TARGET_MASK}}' '{{.TARGET_DIR}}'
@@ -108,4 +108,19 @@ tasks:
         sh: cat '{{.RNDC_USERS_LIST}}' | grep -v '#'
     cmds:
       - for: { var: RNDC_USERS }
-        cmd: sudo rm -Rf '{{.RNDC_HOME_BASEDIR}}/{{.ITEM}}/internal'
+        task: remove-rndc-shared-peruser
+        vars:
+          USERNAME: '{{.ITEM}}'
+
+  remove-rndc-shared-peruser:
+    desc: Removes the shared directory for a given user
+    internal: true
+    silent: true
+    vars:
+      USER_HOME_DIR:    '{{.RNDC_HOME_BASEDIR}}/{{.USERNAME}}'
+      TARGET_DIR:       '{{.USER_HOME_DIR}}/internal'
+    status:
+      - "[[ ! -d '{{.TARGET_DIR}}' ]]"
+    cmds:
+      - sudo umount '{{.TARGET_DIR}}' || echo "Not mounted, skipping..."
+      - sudo rm -Rf '{{.TARGET_DIR}}'
