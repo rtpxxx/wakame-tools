@@ -98,6 +98,22 @@ tasks:
         sudo mkdir -p '{{.TARGET_DIR}}'
         sudo chown -R '{{.USERNAME}}:{{.RNDC_MAIN_GROUP}}' '{{.TARGET_DIR}}'
         sudo chmod -R '{{.TARGET_MASK}}' '{{.TARGET_DIR}}'
+      - task: mount-create-userdir
+        vars:
+          USERNAME: '{{.USERNAME}}'
+
+  mount-create-userdir:
+    desc: Creates a separate directory per user within the internal shared directory.
+    internal: true
+    vars:
+      INTERNAL_USER_DIR:  '{{.RNDC_INTERNAL_DIR}}/{{.USERNAME}}'
+      MASK_USER_DIR:      '750'
+    status:
+      - test -d '{{.INTERNAL_USER_DIR}}'
+    cmds:
+      - mkdir -p '{{.INTERNAL_USER_DIR}}'
+      - chown -R '{{.USERNAME}}:{{.RNDC_MAIN_GROUP}}' '{{.INTERNAL_USER_DIR}}'
+      - chmod -R '{{.MASK_USER_DIR}}' '{{.INTERNAL_USER_DIR}}'
 
   remove-rndc-shared-mounts:
     desc: Remove the directories from the users home folder for all the RNDC team members
