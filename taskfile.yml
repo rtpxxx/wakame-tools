@@ -1,0 +1,17 @@
+# Copyright (C) Barnes Group Inc. - All Rights Reserved
+# 
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Tubio-Pardavila, Ricardo; ricardo-tubio@oenbarnes.com, 03.04.2024
+
+version: '3'
+
+includes:
+
+  users: '{{.PWD}}/tasks/users.taskfile.yml'
+
+tasks:
+
+  default:
+    cmds:
+      - task: users:init-rndc-users

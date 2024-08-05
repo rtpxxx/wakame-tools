@@ -1,0 +1,111 @@
+# Copyright (C) Barnes Group Inc. - All Rights Reserved
+# 
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Tubio-Pardavila, Ricardo; ricardo-tubio@oenbarnes.com, 03.04.2024
+
+version: '3'
+
+vars:
+
+  # Join list with a templated GO command
+  RNDC_GROUPS:        '{{.RNDC_MAIN_GROUP}} {{.RNDC_EXTRA_GROUPS}}'
+  GROUPS_DIR:         '{{.PWD}}/groups'
+  RNDC_USERS_LIST:    '{{.GROUPS_DIR}}/rndc.list'
+  # ### System files to be changed
+  FSTAB:              '/etc/fstab'
+  RNDC_HOME_BASEDIR:  '/home'
+  RNDC_INTERNAL_DIR:  '/opt/internal'
+  # ### Common directory structure
+  RNDC_MAIN_GROUP:    'rndc'
+  RNDC_EXTRA_GROUPS:  'docker'
+
+tasks:
+
+  init-rndc-users:
+    desc: Initializes the users folders for all the users of the RNDC group
+    preconditions:
+      - test -f '{{.RNDC_USERS_LIST}}'
+    vars:
+      RNDC_USERS:
+        sh: cat '{{.RNDC_USERS_LIST}}' | grep -v '#'
+    cmds:
+      - for: { var: RNDC_USERS }
+        task: init-rndc-user
+        vars:
+          USERNAME: '{{.ITEM}}'
+      - mount -a
+
+  init-rndc-user:
+    desc: Task that initializes the resources for a single user.
+    internal: true
+    cmds:
+      - 'echo "Initializing user: {{.USERNAME}}"'
+      - task: create-rndc-user
+        vars:
+          USERNAME: '{{.USERNAME}}'
+      - task: add-rndc-groups
+        vars:
+          USERNAME: '{{.USERNAME}}'
+      - task: mount-rndc-shared
+        vars:
+          USERNAME: '{{.USERNAME}}'
+
+  create-rndc-user:
+    desc: Creates a user for the RNDC team with the right home.
+    internal: true
+    vars:
+      USER_HOME_DIR:  '{{.RNDC_HOME_BASEDIR}}/{{.USERNAME}}'
+    status:
+      - test -d '{{.USER_HOME_DIR}}'
+    cmds:
+      - |
+        echo "Creating user: '{{.USERNAME}}'"
+        sudo useradd \
+            --home-dir '{{.USER_HOME_DIR}}' \
+            --create-home \
+            --user-group \
+            --groups '{{.RNDC_GROUPS}}' \
+          '{{.USERNAME}}'
+
+  add-rndc-groups:
+    desc: Adds the right groups to an RNDC user
+    internal: true
+    vars:
+      USER_GROUPS:
+        sh: groups '{{.USERNAME}}'
+    cmds:
+      - |
+        echo "Adding user: {{.USERNAME}} to all the groups"
+      - for: { var: RNDC_GROUPS }
+        cmd: sudo adduser '{{.USERNAME}}' '{{.ITEM}}'
+
+  mount-rndc-shared:
+    desc: This task mounts a shared folder within this computer for every member of the RNDC team.
+    internal: true
+    vars:
+      USER_HOME_DIR:    '{{.RNDC_HOME_BASEDIR}}/{{.USERNAME}}'
+      TARGET_DIR:       '{{.USER_HOME_DIR}}/internal'
+      TARGET_MASK:      '770'
+      FSTAB_USER_STR:   '# ### [rndc] Shared internal folder mount for user <{{.USERNAME}}>'
+      FSTAB_MOUNT_STR:  '{{.RNDC_INTERNAL_DIR}} {{.USER_HOME_DIR}} none bind 0 0'
+    status:
+      - test -d '{{.TARGET_DIR}}'
+    cmds:
+      - | 
+        echo '{{.FSTAB_USER_STR}}'    | sudo tee -a '{{.FSTAB}}'
+        echo '{{.FSTAB_USER_MOUNT}}'  | sudo tee -a '{{.FSTAB}}'
+        sudo mkdir -p '{{.TARGET_DIR}}'
+        sudo chown -R '{{.USERNAME}}:{{.RNDC_MAIN_GROUP}}' '{{.TARGET_DIR}}'
+        sudo chmod -R '{{.TARGET_MASK}}' '{{.TARGET_DIR}}'
+
+  remove-rndc-shared-mounts:
+    desc: Remove the directories from the users home folder for all the RNDC team members
+    preconditions:
+      - test -f '{{.RNDC_USERS_LIST}}'
+    vars:
+      RNDC_USERS:
+        sh: cat '{{.RNDC_USERS_LIST}}' | grep -v '#'
+    cmds:
+      - for: { var: RNDC_USERS }
+        cmd: sudo rm -Rf '{{.RNDC_HOME_BASEDIR}}/{{.ITEM}}/internal'
