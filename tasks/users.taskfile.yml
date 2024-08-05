@@ -111,9 +111,9 @@ tasks:
     status:
       - test -d '{{.INTERNAL_USER_DIR}}'
     cmds:
-      - mkdir -p '{{.INTERNAL_USER_DIR}}'
-      - chown -R '{{.USERNAME}}:{{.RNDC_MAIN_GROUP}}' '{{.INTERNAL_USER_DIR}}'
-      - chmod -R '{{.MASK_USER_DIR}}' '{{.INTERNAL_USER_DIR}}'
+      - sudo mkdir -p '{{.INTERNAL_USER_DIR}}'
+      - sudo chown -R '{{.USERNAME}}:{{.RNDC_MAIN_GROUP}}' '{{.INTERNAL_USER_DIR}}'
+      - sudo chmod -R '{{.MASK_USER_DIR}}' '{{.INTERNAL_USER_DIR}}'
 
   remove-rndc-shared-mounts:
     desc: Remove the directories from the users home folder for all the RNDC team members
@@ -139,4 +139,4 @@ tasks:
       - "[[ ! -d '{{.TARGET_DIR}}' ]]"
     cmds:
       - sudo umount '{{.TARGET_DIR}}' || echo "Not mounted, skipping..."
-      - sudo rm -Rf '{{.TARGET_DIR}}'
+      - sudo rm -Rf '{{.TARGET_DIR}}' || echo "Cannot remove, skipping..."
