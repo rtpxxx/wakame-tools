@@ -1,0 +1,19 @@
+# Copyright (C) Barnes Group Inc. - All Rights Reserved
+# 
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Tubio-Pardavila, Ricardo; ricardo-tubio@oenbarnes.com, 03.04.2024
+
+version: '3'
+
+tasks:
+
+  install:
+    desc: Installs this task in the OS so that it is called up periodically
+    status:
+      - test -f '{{ .DOCKER_TASK }}'
+
+  run:
+    desc: Task that cleans up the system periodically for all users
+    cmds:
+      - docker system prune --all --volumes --force &2>1 >> '{{ .DOCKER_LOG }}'

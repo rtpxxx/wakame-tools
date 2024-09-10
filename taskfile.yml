@@ -6,12 +6,36 @@
 
 version: '3'
 
+vars:
+
+  USER_HOME:
+    sh: echo $HOME
+  CONF_DIR: '{{.USER_HOME}}/.config/wakame'
+  TASKS_DIR: '{{.USER_HOME}}/.local/share/wakame'
+  LOG_DIR: '/var/log/wakame'
+  WAKAME_LOG: '{{.LOG_DIR}}/tasks.log'
+
 includes:
 
-  users: '{{.PWD}}/tasks/users.taskfile.yml'
+  users: '{{.PWD}}/tasks/users.yml'
+  docker: '{{.PWD}}/tasks/docker.yml'
 
 tasks:
 
   default:
     cmds:
       - task: users:init-rndc-users
+      - task: docker:install
+
+#  init:
+#    desc: Initializes the running OS with the tasks installation
+
+  init-task:
+    desc: Installs the taskfile binary
+    vars:
+      TASKFILE_BIN: '{{.USER_HOME}}/.local/bin/task'
+    status:
+      - test -f '{{.TASKFILE_BIN}}'
+    cmds:
+      - echo "Installing taskfile binary..."
+      - sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b ~/.local/bin
