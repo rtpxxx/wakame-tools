@@ -33,6 +33,19 @@ tasks:
     status:
       - test -d '{{.ANACRON_DAILY}}'
       - test -d '{{.ANACRON_SPOOL_DIR}}'
+      - test -f '{{.ANACRON_CONF}}'
     cmds:
       - mkdir -p '{{.ANACRON_DAILY}}'
       - mkdir -p '{{.ANACRON_SPOOL_DIR}}'
+      - |
+        echo "SHELL=/bin/sh" > '{{.ANACRON_CONF}}'
+        echo "PATH=/sbin:/bin:/usr/sbin:/usr/bin" >> '{{.ANACRON_CONF}}'
+        echo "1  0  anacron.{{.USER_NAME}}    run-parts {{.ANACRON_DAILY}}/" >> '{{.ANACRON_CONF}}'
+  
+  check:
+    desc: Checks the local configuration file for anacron
+    preconditioins:
+      - sh: test -f '{{.ANACRON_CONF}}'
+        msg: "Local configuration file not found, file = {{.ANACRON_CONF}}"
+    cmds:
+      - anacron -T -t '{{.ANACRON_CONF}}' -S '{{.ANACRON_SPOOL_DIR}}'

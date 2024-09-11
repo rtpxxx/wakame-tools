@@ -8,7 +8,7 @@ version: '3'
 
 tasks:
 
-  install:
+  setup:
     desc: Installs this task in the OS so that it is called up periodically
     status:
       - test -f '{{ .DOCKER_TASK }}'
@@ -17,3 +17,13 @@ tasks:
     desc: Task that cleans up the system periodically for all users
     cmds:
       - docker system prune --all --volumes --force &2>1 >> '{{ .WAKAME_LOG }}'
+
+  anacron:
+    desc: Installs the anacron daily task for mantaining docker
+    status:
+      - test -f '{{.ANACRON_DOCKER_DAILY}}'
+    cmds:
+      - |
+        echo "\" \
+          > '{{.ANACRON_DOCKER_DAILY}}'
+      - chmod +x '{{.ANACRON_DOCKER_DAILY}}'

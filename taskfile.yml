@@ -9,6 +9,8 @@ version: '3'
 vars:
 
   # Common user directory tree
+  USER_NAME:
+    sh: whoami
   USER_HOME:
     sh: echo $HOME
   CONF_DIR:           '{{.USER_HOME}}/.config'
@@ -25,7 +27,10 @@ vars:
   WAKAME_LOG_FILE:    '{{.LOG_DIR}}/wakame.log'
   # Anacron directory strucure (user directory tree)
   ANACRON_DAILY:      '{{.ETC_DIR}}/cron.daily'
+  ANACRON_CONF:       '{{.ETC_DIR}}/anacrontab'
   ANACRON_SPOOL_DIR:  '{{.SPOOL_DIR}}/spool/anacron'
+  # Daily anacron scripts for system maintenance
+  ANACRON_DOCKER_DAILY:  '{{.ANACRON_DAILY}}/docker-cleanup.yml'
 
 includes:
 
