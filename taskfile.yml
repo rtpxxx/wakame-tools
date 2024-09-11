@@ -15,6 +15,7 @@ vars:
     sh: echo $HOME
   CONF_DIR:           '{{.USER_HOME}}/.config'
   LOCAL_DIR:          '{{.USER_HOME}}/.local'
+  BIN_DIR:            '{{.LOCAL_DIR}}/bin'
   ETC_DIR:            '{{.LOCAL_DIR}}/etc'
   SHARE_DIR:          '{{.LOCAL_DIR}}/share'
   VAR_DIR:            '{{.LOCAL_DIR}}/var'
@@ -23,7 +24,7 @@ vars:
   # Wakame directory strucure (user directory tree)
   WAKAME_CONF_DIR:    '{{.CONF_DIR}}/wakame'
   WAKAME_LOG_DIR:     '{{.LOG_DIR}}/wakame'
-  WAKAME_LOG_FILE:    '{{.LOG_DIR}}/wakame.log'
+  WAKAME_LOG_FILE:    '{{.WAKAME_LOG_DIR}}/wakame.log'
   WAKAME_TASKS_DIR:   '{{.SHARE_DIR}}/wakame'
   WAKAME_TASK:        '{{.WAKAME_TASKS_DIR}}/taskfile.yml'
   # Anacron directory strucure (user directory tree)

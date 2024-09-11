@@ -17,6 +17,7 @@ tasks:
     cmds:
       - task: install
       - task: configure
+      - task: configure-anacrontab
 
   install:
     desc: Installs anacron in the host OS
@@ -35,14 +36,25 @@ tasks:
     status:
       - test -d '{{.ANACRON_DAILY}}'
       - test -d '{{.ANACRON_SPOOL_DIR}}'
-      - test -f '{{.ANACRON_CONF}}'
     cmds:
       - mkdir -p '{{.ANACRON_DAILY}}'
       - mkdir -p '{{.ANACRON_SPOOL_DIR}}'
+
+  configure-anacrontab:
+    desc: Configures the crontab for daily anacron
+    internal: true
+    cmds:
       - |
         echo "SHELL=/bin/sh" > '{{.ANACRON_CONF}}'
-        echo "PATH=/sbin:/bin:/usr/sbin:/usr/bin" >> '{{.ANACRON_CONF}}'
-        echo "1  0  anacron.{{.USER_NAME}}    run-parts {{.ANACRON_DAILY}}/" >> '{{.ANACRON_CONF}}'
+        echo "PATH=/sbin:/bin:/usr/sbin:/usr/bin:{{.BIN_DIR}}" >> '{{.ANACRON_CONF}}'
+        echo "1  0  anacron.{{.USER_NAME}}    run-parts {{.ANACRON_DAILY}}/ >>{{.WAKAME_LOG_FILE}} 2>&1" >> '{{.ANACRON_CONF}}'
+
+  configure-profile:
+    desc: Adds the running command to the bash profile
+    prompt: Be sure the line for anacron does not exist in the bash .profile file"
+    cmds:
+      - echo "anacron -t {{.ANACRON_CONF}} -S {{.ANACRON_SPOOL_DIR}}" \
+         >> '{{.USER_HOME}}/.profile'
 
   check:
     desc: Checks the local configuration file for anacron
