@@ -22,15 +22,16 @@ vars:
   SPOOL_DIR:          '{{.VAR_DIR}}/spool'
   # Wakame directory strucure (user directory tree)
   WAKAME_CONF_DIR:    '{{.CONF_DIR}}/wakame'
-  WAKAME_SRC_DIR:     '{{.SHARE_DIR}}/wakame'
   WAKAME_LOG_DIR:     '{{.LOG_DIR}}/wakame'
   WAKAME_LOG_FILE:    '{{.LOG_DIR}}/wakame.log'
+  WAKAME_TASKS_DIR:   '{{.SHARE_DIR}}/wakame'
+  WAKAME_TASK:        '{{.WAKAME_TASKS_DIR}}/taskfile.yml'
   # Anacron directory strucure (user directory tree)
   ANACRON_DAILY:      '{{.ETC_DIR}}/cron.daily'
   ANACRON_CONF:       '{{.ETC_DIR}}/anacrontab'
   ANACRON_SPOOL_DIR:  '{{.SPOOL_DIR}}/spool/anacron'
   # Daily anacron scripts for system maintenance
-  ANACRON_DOCKER_DAILY:  '{{.ANACRON_DAILY}}/docker-cleanup.yml'
+  ANACRON_DOCKER_DAILY:  '{{.ANACRON_DAILY}}/docker-cleanup.sh'
 
 includes:
 
@@ -42,34 +43,27 @@ tasks:
 
   default:
     cmds:
-      - task: users:init-rndc-users
-      - task: docker:install
-
-  init:
-    desc: Initializes the running OS with the tasks installation
-    cmds:
-      - task: init-task
+      - echo "Installing local resources..."
+      - task: setup
+      - task: deploy
+      - task: anacron:setup
+      - task: docker:anacron
+      - echo "See the list of available tasks with = task --list"
 
   setup:
     desc: Installs the script resources in the local OS
+    internal: true
     status:
-      - test -d '{{.CONF_DIR}}'
-      - test -d '{{.TASKS_DIR}}'
-      - test -d '{{.LOG_DIR}}'
+      - test -d '{{.WAKAME_CONF_DIR}}'
+      - test -d '{{.WAKAME_TASKS_DIR}}'
+      - test -d '{{.WAKAME_LOG_DIR}}'
     cmds:
-      - mkdir -p '{{.CONF_DIR}}'
-      - mkdir -p '{{.TASKS_DIR}}'
-      - mkdir -p '{{.LOG_DIR}}'
+      - mkdir -p '{{.WAKAME_CONF_DIR}}'
+      - mkdir -p '{{.WAKAME_TASKS_DIR}}'
+      - mkdir -p '{{.WAKAME_LOG_DIR}}'
 
-  update-tasks:
-    desc: Updates the tasks only 
-
-  init-task:
-    desc: Installs the taskfile binary
-    vars:
-      TASKFILE_BIN: '{{.USER_HOME}}/.local/bin/task'
-    status:
-      - test -f '{{.TASKFILE_BIN}}'
+  deploy:
+    desc: (overrides) Deploys the source code in the target directory
+    prompt: This task should only be called from within the GIT repository root, are you there?
     cmds:
-      - echo "Installing taskfile binary..."
-      - sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b ~/.local/bin
+      - cp -Rf {{.PWD}}/* {{.SHARE_DIR}}/wakame/.

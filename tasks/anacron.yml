@@ -3,6 +3,8 @@
 # Unauthorized copying of this file, via any medium is strictly prohibited
 # Proprietary and confidential
 # Written by Tubio-Pardavila, Ricardo; ricardo-tubio@oenbarnes.com, 03.04.2024
+#
+# https://opensource.com/article/21/2/linux-automation
 
 version: '3'
 
@@ -41,11 +43,16 @@ tasks:
         echo "SHELL=/bin/sh" > '{{.ANACRON_CONF}}'
         echo "PATH=/sbin:/bin:/usr/sbin:/usr/bin" >> '{{.ANACRON_CONF}}'
         echo "1  0  anacron.{{.USER_NAME}}    run-parts {{.ANACRON_DAILY}}/" >> '{{.ANACRON_CONF}}'
-  
+
   check:
     desc: Checks the local configuration file for anacron
+    prompt: This command will run your anacron scripts, are you sure?
     preconditioins:
       - sh: test -f '{{.ANACRON_CONF}}'
-        msg: "Local configuration file not found, file = {{.ANACRON_CONF}}"
+        msg: "Local configuration file not found, path = {{.ANACRON_CONF}}"
+      - sh: test -d '{{.ANACRON_SPOOL_DIR}}'
+        msg: "Local spool dir for anacron not found, path = {{.ANACRON_SPOOL_DIR}}"
     cmds:
       - anacron -T -t '{{.ANACRON_CONF}}' -S '{{.ANACRON_SPOOL_DIR}}'
+      - anacron -fn -t '{{.ANACRON_CONF}}' -S '{{.ANACRON_SPOOL_DIR}}'
+      - echo "Check anacron's log messages in syslog"
