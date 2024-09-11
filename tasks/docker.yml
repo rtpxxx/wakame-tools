@@ -13,7 +13,7 @@ tasks:
     status:
       - test -f '{{ .DOCKER_TASK }}'
 
-  run:
+  clean:
     desc: Task that cleans up the system periodically for all users
     cmds:
-      - docker system prune --all --volumes --force &2>1 >> '{{ .DOCKER_LOG }}'
+      - docker system prune --all --volumes --force &2>1 >> '{{ .WAKAME_LOG }}'

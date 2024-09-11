@@ -8,17 +8,30 @@ version: '3'
 
 vars:
 
+  # Common user directory tree
   USER_HOME:
     sh: echo $HOME
-  CONF_DIR: '{{.USER_HOME}}/.config/wakame'
-  TASKS_DIR: '{{.USER_HOME}}/.local/share/wakame'
-  LOG_DIR: '/var/log/wakame'
-  WAKAME_LOG: '{{.LOG_DIR}}/tasks.log'
+  CONF_DIR:           '{{.USER_HOME}}/.config'
+  LOCAL_DIR:          '{{.USER_HOME}}/.local'
+  ETC_DIR:            '{{.LOCAL_DIR}}/etc'
+  SHARE_DIR:          '{{.LOCAL_DIR}}/share'
+  VAR_DIR:            '{{.LOCAL_DIR}}/var'
+  LOG_DIR:            '{{.VAR_DIR}}/log'
+  SPOOL_DIR:          '{{.VAR_DIR}}/spool'
+  # Wakame directory strucure (user directory tree)
+  WAKAME_CONF_DIR:    '{{.CONF_DIR}}/wakame'
+  WAKAME_SRC_DIR:     '{{.SHARE_DIR}}/wakame'
+  WAKAME_LOG_DIR:     '{{.LOG_DIR}}/wakame'
+  WAKAME_LOG_FILE:    '{{.LOG_DIR}}/wakame.log'
+  # Anacron directory strucure (user directory tree)
+  ANACRON_DAILY:      '{{.ETC_DIR}}/cron.daily'
+  ANACRON_SPOOL_DIR:  '{{.SPOOL_DIR}}/spool/anacron'
 
 includes:
 
-  users: '{{.PWD}}/tasks/users.yml'
-  docker: '{{.PWD}}/tasks/docker.yml'
+  anacron:  '{{.PWD}}/tasks/anacron.yml'
+  docker:   '{{.PWD}}/tasks/docker.yml'
+  users:    '{{.PWD}}/tasks/users.yml'
 
 tasks:
 
@@ -27,8 +40,24 @@ tasks:
       - task: users:init-rndc-users
       - task: docker:install
 
-#  init:
-#    desc: Initializes the running OS with the tasks installation
+  init:
+    desc: Initializes the running OS with the tasks installation
+    cmds:
+      - task: init-task
+
+  setup:
+    desc: Installs the script resources in the local OS
+    status:
+      - test -d '{{.CONF_DIR}}'
+      - test -d '{{.TASKS_DIR}}'
+      - test -d '{{.LOG_DIR}}'
+    cmds:
+      - mkdir -p '{{.CONF_DIR}}'
+      - mkdir -p '{{.TASKS_DIR}}'
+      - mkdir -p '{{.LOG_DIR}}'
+
+  update-tasks:
+    desc: Updates the tasks only 
 
   init-task:
     desc: Installs the taskfile binary

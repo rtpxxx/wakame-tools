@@ -1,0 +1,38 @@
+# Copyright (C) Barnes Group Inc. - All Rights Reserved
+# 
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Tubio-Pardavila, Ricardo; ricardo-tubio@oenbarnes.com, 03.04.2024
+
+version: '3'
+
+vars:
+
+tasks:
+
+  setup:
+    desc: Installs anacron in the system and configures the local user home
+    cmds:
+      - task: install
+      - task: configure
+
+  install:
+    desc: Installs anacron in the host OS
+    prompt: Os packages need to be installed, root password needed.
+    internal: true
+    status:
+      - apt -qq list anacron 2>/dev/null | grep installed
+    cmds:
+      - |
+        DEBIAN_FRONTEND=noninteractive \
+          sudo apt update && sudo apt -y install anacron
+
+  configure:
+    desc: Creates the local resources for anacron
+    internal: true
+    status:
+      - test -d '{{.ANACRON_DAILY}}'
+      - test -d '{{.ANACRON_SPOOL_DIR}}'
+    cmds:
+      - mkdir -p '{{.ANACRON_DAILY}}'
+      - mkdir -p '{{.ANACRON_SPOOL_DIR}}'
