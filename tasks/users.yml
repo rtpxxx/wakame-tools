@@ -8,6 +8,9 @@ version: '3'
 
 vars:
 
+  # ### Common directory structure
+  RNDC_MAIN_GROUP:    'rndc'
+  RNDC_EXTRA_GROUPS:  'docker'
   # Join list with a templated GO command
   RNDC_GROUPS:        '{{.RNDC_MAIN_GROUP}} {{.RNDC_EXTRA_GROUPS}}'
   GROUPS_DIR:         '{{.PWD}}/groups'
@@ -16,9 +19,6 @@ vars:
   FSTAB:              '/etc/fstab'
   RNDC_HOME_BASEDIR:  '/home'
   RNDC_INTERNAL_DIR:  '/opt/internal'
-  # ### Common directory structure
-  RNDC_MAIN_GROUP:    'rndc'
-  RNDC_EXTRA_GROUPS:  'docker'
 
 tasks:
 
@@ -56,17 +56,20 @@ tasks:
     internal: true
     vars:
       USER_HOME_DIR:  '{{.RNDC_HOME_BASEDIR}}/{{.USERNAME}}'
+      EXTRA_GROUPS:   '{{.RNDC_GROUPS | replace " " ","}}'
+      DEFAULT_PASSWD: 'Ch4ng3m3!'
     status:
       - test -d '{{.USER_HOME_DIR}}'
     cmds:
       - |
         echo "Creating user: '{{.USERNAME}}'"
         sudo useradd \
-            --home-dir '{{.USER_HOME_DIR}}' \
+            --home-dir {{.USER_HOME_DIR}} \
             --create-home \
             --user-group \
-            --groups '{{.RNDC_GROUPS}}' \
-          '{{.USERNAME}}'
+            --groups {{.EXTRA_GROUPS}} \
+          {{.USERNAME}}
+        echo {{.USERNAME}}:{{.DEFAULT_PASSWD}} | sudo chpasswd
 
   add-rndc-groups:
     desc: Adds the right groups to an RNDC user
